@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmileCare — Klinik Yönetim Paneli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ─────────────────────────── TOKENS ─────────────────────────── */
+:root {
+  /* Background / Surface */
+  --bg:            oklch(0.96 0.010 80);
+  --surface:       oklch(0.99 0.005 80);
+  --surface-2:     oklch(0.93 0.014 80);
+  --surface-3:     oklch(0.90 0.016 80);
+
+  /* Borders */
+  --border:        oklch(0.87 0.010 80);
+  --border-strong: oklch(0.74 0.016 80);
+
+  /* Ink */
+  --ink:           oklch(0.16 0.020 255);
+  --ink-2:         oklch(0.40 0.018 255);
+  --ink-3:         oklch(0.62 0.012 255);
+  --ink-4:         oklch(0.76 0.008 255);
+
+  /* Sidebar */
+  --sb-bg:         oklch(0.17 0.030 185);
+  --sb-surface:    oklch(0.23 0.032 185);
+  --sb-hover:      oklch(0.25 0.034 185);
+  --sb-active:     oklch(0.30 0.038 185);
+  --sb-text:       oklch(0.88 0.015 185);
+  --sb-muted:      oklch(0.54 0.022 185);
+  --sb-border:     oklch(0.28 0.028 185);
+
+  /* Accent — teal */
+  --accent:        oklch(0.46 0.12 200);
+  --accent-hover:  oklch(0.40 0.14 200);
+  --accent-light:  oklch(0.93 0.05 200);
+  --accent-text:   oklch(0.30 0.10 200);
+
+  /* States */
+  --success:       oklch(0.51 0.14 155);
+  --success-light: oklch(0.94 0.06 155);
+  --success-text:  oklch(0.32 0.12 155);
+  --warning:       oklch(0.63 0.16 70);
+  --warning-light: oklch(0.95 0.07 70);
+  --warning-text:  oklch(0.40 0.14 70);
+  --danger:        oklch(0.52 0.19 25);
+  --danger-light:  oklch(0.96 0.05 25);
+  --danger-text:   oklch(0.34 0.16 25);
+
+  /* Channels */
+  --wa:            oklch(0.52 0.15 155);
+  --wa-light:      oklch(0.93 0.06 155);
+  --voice:         oklch(0.58 0.16 55);
+  --voice-light:   oklch(0.95 0.08 55);
+
+  /* Typography */
+  --font-display:  'Playfair Display', Georgia, serif;
+  --font-ui:       'Outfit', system-ui, sans-serif;
+  --font-data:     'JetBrains Mono', 'Courier New', monospace;
+
+  --sb-w: 220px;
+  --topbar-h: 58px;
+}
+
+/* ─────────────────────────── RESET ─────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { color-scheme: light; }
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--ink);
+  display: flex;
+  min-height: 100vh;
+  font-size: 13.5px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; cursor: pointer; }
+table { border-collapse: collapse; width: 100%; }
+
+/* ─────────────────────────── SIDEBAR ─────────────────────────── */
+.sidebar {
+  width: var(--sb-w);
+  background: var(--sb-bg);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  z-index: 200;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+/* Subtle noise texture via repeating gradient */
+.sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    135deg,
+    oklch(1 0 0 / 0.018) 0px,
+    oklch(1 0 0 / 0.018) 1px,
+    transparent 1px,
+    transparent 28px
+  );
+  pointer-events: none;
+}
+
+.sb-logo {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid var(--sb-border);
+  position: relative;
+}
+.sb-logo-mark {
+  width: 34px;
+  height: 34px;
+  border: 1.5px solid oklch(0.88 0.015 185 / 0.35);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--sb-text);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.sb-logo h1 {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sb-text);
+  letter-spacing: 0.01em;
+}
+.sb-logo p {
+  font-size: 11px;
+  color: var(--sb-muted);
+  margin-top: 2px;
+  font-family: var(--font-data);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sb-nav {
+  flex: 1;
+  padding: 14px 10px;
+  position: relative;
+}
+.sb-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--sb-muted);
+  padding: 10px 10px 5px;
+  font-family: var(--font-data);
+}
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--sb-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  margin-bottom: 1px;
+  user-select: none;
+  position: relative;
+}
+.sb-item:hover {
+  background: var(--sb-hover);
+  color: var(--sb-text);
+}
+.sb-item.active {
+  background: var(--sb-active);
+  color: var(--sb-text);
+  font-weight: 600;
+}
+.sb-item .sb-icon {
+  width: 18px;
+  text-align: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+.sb-item.active .sb-icon { opacity: 1; }
+.sb-count {
+  margin-left: auto;
+  background: var(--danger);
+  color: oklch(0.98 0.005 0);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-data);
+  padding: 1px 6px;
+  border-radius: 99px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.sb-bottom {
+  padding: 14px 10px;
+  border-top: 1px solid var(--sb-border);
+  position: relative;
+}
+.sb-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sb-user:hover { background: var(--sb-hover); }
+.sb-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: oklch(0.46 0.12 200);
+  color: oklch(0.98 0.005 200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.sb-user-name { font-size: 12.5px; font-weight: 600; color: var(--sb-text); }
+.sb-user-role { font-size: 10.5px; color: var(--sb-muted); }
+
+/* ─────────────────────────── MAIN ─────────────────────────── */
+.main {
+  margin-left: var(--sb-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ─────────────────────────── TOPBAR ─────────────────────────── */
+.topbar {
+  height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-left { display: flex; align-items: center; gap: 14px; }
+.topbar-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.topbar-date {
+  font-family: var(--font-data);
+  font-size: 11.5px;
+  color: var(--ink-3);
+  background: var(--surface-2);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.channel-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: var(--font-data);
+  letter-spacing: 0.02em;
+}
+.channel-tag.wa {
+  background: var(--wa-light);
+  color: var(--success-text);
+}
+.channel-tag.voice {
+  background: var(--voice-light);
+  color: var(--warning-text);
+}
+.channel-tag .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.channel-tag.wa .dot { background: var(--wa); }
+.channel-tag.voice .dot { background: var(--voice); }
+.notif-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s;
+}
+.notif-btn:hover { background: var(--surface-2); }
+.notif-pip {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  background: var(--danger);
+  border-radius: 50%;
+  border: 1.5px solid var(--surface);
+}
+
+/* ─────────────────────────── CONTENT ─────────────────────────── */
+.content {
+  padding: 24px 28px;
+  flex: 1;
+}
+
+/* ─────────────────────────── SECTIONS ─────────────────────────── */
+.section { display: none; }
+.section.active {
+  display: block;
+  animation: sectionIn 0.22s ease-out both;
+}
+@keyframes sectionIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─────────────────────────── KPI STRIP ─────────────────────────── */
+.kpi-strip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.kpi-cell {
+  flex: 1;
+  padding: 18px 22px 16px;
+  border-right: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.kpi-cell:last-child { border-right: none; }
+.kpi-cell:hover { background: var(--surface-2); }
+.kpi-cell-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+  margin-bottom: 6px;
+  font-family: var(--font-data);
+}
+.kpi-cell-value {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.kpi-cell-value .kpi-unit {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+.kpi-cell-sub {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.kpi-delta {
+  font-family: var(--font-data);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.kpi-delta.up   { background: var(--success-light); color: var(--success-text); }
+.kpi-delta.down { background: var(--danger-light);  color: var(--danger-text); }
+.kpi-delta.flat { background: var(--surface-2); color: var(--ink-3); }
+
+/* ─────────────────────────── LAYOUT GRIDS ─────────────────────────── */
+.grid-65-35 { display: grid; grid-template-columns: 65fr 35fr; gap: 16px; margin-bottom: 16px; }
+.grid-60-40 { display: grid; grid-template-columns: 60fr 40fr; gap: 16px; margin-bottom: 16px; }
+.grid-2     { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-3     { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-4-kpi { display: grid; grid-template-columns: repeat(4,1fr); gap: 0; margin-bottom: 20px; }
+.col-stack  { display: flex; flex-direction: column; gap: 16px; }
+
+/* ─────────────────────────── PANEL ─────────────────────────── */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.panel-head {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.panel-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.panel-sub {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  margin-top: 1px;
+  font-family: var(--font-data);
+}
+.panel-body { padding: 16px 20px; }
+.panel-action {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: none;
+  padding: 0;
+  transition: color 0.12s;
+}
+.panel-action:hover { color: var(--accent-hover); }
+
+/* ─────────────────────────── TABLE ─────────────────────────── */
+.tbl-wrap { overflow-x: auto; }
+.tbl th {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  padding: 9px 16px;
+  text-align: left;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-data);
+  white-space: nowrap;
+}
+.tbl td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  color: var(--ink);
+}
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tbody tr { transition: background 0.12s; }
+.tbl tbody tr:hover td { background: var(--surface-2); }
+.td-mono {
+  font-family: var(--font-data);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.td-name { font-weight: 600; font-size: 13.5px; }
+.td-muted { font-size: 12px; color: var(--ink-3); }
+.td-sub { font-size: 11.5px; color: var(--ink-3); font-family: var(--font-data); margin-top: 1px; }
+
+/* ─────────────────────────── STATUS ─────────────────────────── */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.status::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-success { color: var(--success-text); }
+.status-success::before { background: var(--success); }
+.status-warning { color: var(--warning-text); }
+.status-warning::before { background: var(--warning); box-shadow: 0 0 0 2px var(--warning-light); }
+.status-danger  { color: var(--danger-text); }
+.status-danger::before  { background: var(--danger); }
+.status-neutral { color: var(--ink-3); }
+.status-neutral::before { background: var(--ink-4); }
+
+/* ─────────────────────────── CHANNEL MARK ─────────────────────────── */
+.ch-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-data);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+.ch-wa    { background: var(--wa-light);    color: var(--success-text); }
+.ch-voice { background: var(--voice-light); color: var(--warning-text); }
+.ch-tel   { background: var(--accent-light); color: var(--accent-text); }
+
+/* ─────────────────────────── TAGS / PILLS ─────────────────────────── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-family: var(--font-data);
+}
+.tag-success { background: var(--success-light); color: var(--success-text); }
+.tag-warning { background: var(--warning-light); color: var(--warning-text); }
+.tag-danger  { background: var(--danger-light);  color: var(--danger-text); }
+.tag-accent  { background: var(--accent-light);  color: var(--accent-text); }
+.tag-neutral { background: var(--surface-2);     color: var(--ink-3); }
+
+/* ─────────────────────────── PROGRESS ROWS ─────────────────────────── */
+.prog-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.prog-row:last-child { margin-bottom: 0; }
+.prog-label { font-size: 12.5px; font-weight: 600; min-width: 90px; }
+.prog-track {
+  flex: 1;
+  height: 5px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.prog-fill  { height: 100%; border-radius: 99px; transition: width 0.5s ease-out; }
+.prog-val   { font-family: var(--font-data); font-size: 11.5px; font-weight: 500; color: var(--ink-3); min-width: 30px; text-align: right; }
+
+/* ─────────────────────────── FUNNEL ─────────────────────────── */
+.funnel-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.funnel-step:last-child { border-bottom: none; }
+.funnel-lbl  { font-size: 12px; font-weight: 600; color: var(--ink-2); min-width: 80px; }
+.funnel-bar-wrap { flex: 1; height: 22px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.funnel-bar  {
+  height: 100%;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-family: var(--font-data);
+  font-size: 11px;
+  font-weight: 600;
+  color: oklch(1 0 0 / 0.9);
+}
+.funnel-pct  { font-family: var(--font-data); font-size: 11.5px; font-weight: 500; color: var(--ink-3); min-width: 38px; text-align: right; }
+
+/* ─────────────────────────── TIMELINE ─────────────────────────── */
+.tl-item { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.tl-item:last-child { border-bottom: none; }
+.tl-time { font-family: var(--font-data); font-size: 11.5px; color: var(--ink-3); min-width: 42px; padding-top: 3px; }
+.tl-dot  { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.tl-body p { font-size: 13.5px; font-weight: 600; }
+.tl-body span { font-size: 12px; color: var(--ink-3); line-height: 1.4; }
+
+/* ─────────────────────────── LEAD ROWS ─────────────────────────── */
+.lead-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+.lead-row:last-child { border-bottom: none; }
+.lead-ch-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.lead-ch-dot.wa    { background: var(--wa-light); }
+.lead-ch-dot.voice { background: var(--voice-light); }
+.lead-info { flex: 1; min-width: 0; }
+.lead-name { font-size: 13px; font-weight: 700; }
+.lead-detail { font-size: 12px; color: var(--ink-3); margin-top: 1px; }
+.lead-meta { text-align: right; flex-shrink: 0; }
+.lead-time { font-family: var(--font-data); font-size: 11px; color: var(--ink-4); }
+
+/* ─────────────────────────── STAT TABLE ─────────────────────────── */
+.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.stat-row:last-child { border-bottom: none; }
+.stat-key { font-size: 13px; color: var(--ink-2); }
+.stat-val { font-family: var(--font-data); font-size: 13px; font-weight: 600; color: var(--ink); }
+
+/* ─────────────────────────── TABS ─────────────────────────── */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  background: var(--surface);
+}
+.tab-btn {
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 10px 14px;
+  color: var(--ink-3);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.tab-btn:hover  { color: var(--ink-2); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ─────────────────────────── WEEK CALENDAR ─────────────────────────── */
+.week-grid { display: grid; grid-template-columns: 44px repeat(6, 1fr); gap: 3px; }
+.wg-head { text-align: center; font-size: 11px; font-weight: 700; color: var(--ink-3); padding: 4px; font-family: var(--font-data); }
+.wg-today-head { color: var(--accent); font-weight: 700; }
+.wg-time { font-family: var(--font-data); font-size: 10.5px; color: var(--ink-4); text-align: right; padding: 3px 6px 0 0; line-height: 1; }
+.wg-cell { min-height: 28px; border-radius: 3px; }
+.wg-cell.today-col { background: oklch(0.96 0.04 200 / 0.4); }
+.wg-appt {
+  border-radius: 3px;
+  padding: 3px 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+.wg-appt.blue   { background: var(--accent-light); color: var(--accent-text); }
+.wg-appt.green  { background: var(--success-light); color: var(--success-text); }
+.wg-appt.amber  { background: var(--warning-light); color: var(--warning-text); }
+.wg-appt.rose   { background: var(--danger-light);  color: var(--danger-text); }
+
+/* ─────────────────────────── DOCTOR CARDS ─────────────────────────── */
+.doc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.doc-row:last-child { border-bottom: none; }
+.doc-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  color: oklch(0.98 0.005 0);
+}
+.doc-name   { font-size: 13.5px; font-weight: 700; }
+.doc-spec   { font-size: 11.5px; color: var(--ink-3); }
+.doc-right  { margin-left: auto; text-align: right; flex-shrink: 0; }
+.doc-count  { font-family: var(--font-display); font-size: 18px; font-weight: 700; line-height: 1; color: var(--ink); }
+.doc-count-sub { font-size: 11px; color: var(--ink-3); }
+.doc-bar-wrap { margin-top: 4px; height: 3px; background: var(--border); border-radius: 99px; width: 80px; overflow: hidden; }
+.doc-bar { height: 100%; border-radius: 99px; }
+
+/* ─────────────────────────── SELECT / FILTER ─────────────────────────── */
+.filter-select {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.filter-select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ─────────────────────────── BTN ─────────────────────────── */
+.btn {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.btn-primary { background: var(--accent); color: oklch(0.98 0.005 200); }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-ghost { background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--surface-3); }
+.btn-sm { font-size: 11.5px; padding: 4px 10px; border-radius: 4px; }
+.btn-success { background: var(--success); color: oklch(0.98 0.005 155); }
+.btn-danger-ghost { background: var(--danger-light); color: var(--danger-text); }
+
+/* ─────────────────────────── CHART ─────────────────────────── */
+.chart-wrap { position: relative; }
+
+/* ─────────────────────────── SECTION HEADINGS ─────────────────────────── */
+.sec-heading {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+/* ─────────────────────────── DIVIDER ─────────────────────────── */
+.divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+/* ─────────────────────────── UTIL ─────────────────────────── */
+.mb-16 { margin-bottom: 16px; }
+.mt-14 { margin-top: 14px; }
+.txt-mono { font-family: var(--font-data); }
+.txt-display { font-family: var(--font-display); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">SC</div>
+    <h1>SmileCare Kliniği</h1>
+    <p>Yönetim Paneli</p>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="sb-group-label">Genel</div>
+    <div class="sb-item active" data-section="dashboard">
+      <span class="sb-icon">◈</span> Genel Bakış
+    </div>
+    <div class="sb-item" data-section="randevular">
+      <span class="sb-icon">◷</span> Randevular
+      <span class="sb-count">4</span>
+    </div>
+
+    <div class="sb-group-label">Kanallar</div>
+    <div class="sb-item" data-section="leads">
+      <span class="sb-icon">◎</span> Hasta / Lead
+      <span class="sb-count">7</span>
+    </div>
+    <div class="sb-item" data-section="whatsapp">
+      <span class="sb-icon">◉</span> WhatsApp Bot
+    </div>
+    <div class="sb-item" data-section="voice">
+      <span class="sb-icon">◈</span> Voice Agent
+    </div>
+
+    <div class="sb-group-label">Klinik</div>
+    <div class="sb-item" data-section="doktorlar">
+      <span class="sb-icon">◑</span> Doktorlar
+    </div>
+    <div class="sb-item" data-section="gelir">
+      <span class="sb-icon">◐</span> Gelir
+    </div>
+  </nav>
+
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-avatar">EG</div>
+      <div>
+        <div class="sb-user-name">Eyup G.</div>
+        <div class="sb-user-role">Klinik Yöneticisi</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════ MAIN ═══ -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title" id="page-title">Genel Bakış</div>
+      <div class="topbar-date" id="today-date"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="channel-tag wa"><span class="dot"></span>WA Aktif</div>
+      <div class="channel-tag voice"><span class="dot"></span>Voice Aktif</div>
+      <div class="notif-btn" title="Bildirimler">🔔<span class="notif-pip"></span></div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ══════════════════ GENEL BAKIŞ ══════════════════ -->
+    <div class="section active" id="sec-dashboard">
+
+      <!-- KPI Strip -->
+      <div class="kpi-strip">
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Bugünkü Randevu</div>
+          <div class="kpi-cell-value">18</div>
+          <div class="kpi-cell-sub">
+            <span class="kpi-delta up">↑ 3</span> dünden fazla · 4 onay bekliyor
+          </div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Yeni Lead</div>
+          <div class="kpi-cell-value">12</div>
+          <div class="kpi-cell-sub">
+            <span class="kpi-delta up">↑ 20%</span> 7 WA · 5 Voice
+          </div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Aktif Hasta</div>
+          <div class="kpi-cell-value">247</div>
+          <div class="kpi-cell-sub">
+            <span class="kpi-delta up">+34</span> bu ay yeni
+          </div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Günlük Gelir</div>
+          <div class="kpi-cell-value"><span class="kpi-unit">₺</span>14.8K</div>
+          <div class="kpi-cell-sub">
+            <span class="kpi-delta down">−₺1.2K</span> hedefe göre
+          </div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Kabin Doluluk</div>
+          <div class="kpi-cell-value">%67</div>
+          <div class="kpi-cell-sub">
+            <span class="kpi-delta flat">4/6</span> kabin dolu
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 1 -->
+      <div class="grid-65-35">
+        <!-- Bugünün Randevuları -->
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Bugünün Randevuları</div>
+              <div class="panel-sub">21 Mayıs 2026 · Perşembe</div>
+            </div>
+            <button class="panel-action" onclick="nav('randevular')">Tümünü gör →</button>
+          </div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Saat</th><th>Hasta</th><th>Tedavi</th><th>Doktor</th><th>Kanal</th><th>Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="td-mono">09:00</td>
+                  <td><div class="td-name">Ahmet Yılmaz</div></td>
+                  <td class="td-muted">Dolgu</td>
+                  <td class="td-muted">Dr. Kaya</td>
+                  <td><span class="ch-mark ch-wa">WA</span></td>
+                  <td><span class="status status-success">Geldi</span></td>
+                </tr>
+                <tr>
+                  <td class="td-mono">09:30</td>
+                  <td><div class="td-name">Fatma Demir</div></td>
+                  <td class="td-muted">Kanal Ted.</td>
+                  <td class="td-muted">Dr. Şahin</td>
+                  <td><span class="ch-mark ch-voice">Voice</span></td>
+                  <td><span class="status status-success">Geldi</span></td>
+                </tr>
+                <tr>
+                  <td class="td-mono">10:00</td>
+                  <td><div class="td-name">Mehmet Çelik</div></td>
+                  <td class="td-muted">Temizlik</td>
+                  <td class="td-muted">Dr. Kaya</td>
+                  <td><span class="ch-mark ch-wa">WA</span></td>
+                  <td><span class="status status-warning">Bekleniyor</span></td>
+                </tr>
+                <tr>
+                  <td class="td-mono">10:30</td>
+                  <td><div class="td-name">Ayşe Öztürk</div></td>
+                  <td class="td-muted">İmplant M.</td>
+                  <td class="td-muted">Dr. Arslan</td>
+                  <td><span class="ch-mark ch-tel">Tel</span></td>
+                  <td><span class="status status-warning">Bekleniyor</span></td>
+                </tr>
+                <tr>
+                  <td class="td-mono">11:00</td>
+                  <td><div class="td-name">Ali Koç</div></td>
+                  <td class="td-muted">Zirkonyum</td>
+                  <td class="td-muted">Dr. Şahin</td>
+                  <td><span class="ch-mark ch-voice">Voice</span></td>
+                  <td><span class="status status-neutral">Planlandı</span></td>
+                </tr>
+                <tr>
+                  <td class="td-mono">11:30</td>
+                  <td><div class="td-name">Selin Kurt</div></td>
+                  <td class="td-muted">Ortodonti</td>
+                  <td class="td-muted">Dr. Arslan</td>
+                  <td><span class="ch-mark ch-wa">WA</span></td>
+                  <td><span class="status status-neutral">Planlandı</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Son Leadler -->
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Son Leadler</div>
+              <div class="panel-sub">Son 24 saat</div>
+            </div>
+            <button class="panel-action" onclick="nav('leads')">Tümü →</button>
+          </div>
+          <div class="panel-body" style="padding-top:8px;padding-bottom:8px">
+            <div class="lead-row">
+              <div class="lead-ch-dot wa">💬</div>
+              <div class="lead-info">
+                <div class="lead-name">Zeynep Aydın</div>
+                <div class="lead-detail">İmplant sorgusu</div>
+              </div>
+              <div class="lead-meta">
+                <div class="lead-time">14 dk</div>
+                <div style="margin-top:3px"><span class="tag tag-warning">Takip</span></div>
+              </div>
+            </div>
+            <div class="lead-row">
+              <div class="lead-ch-dot voice">🎙</div>
+              <div class="lead-info">
+                <div class="lead-name">Burak Yıldız</div>
+                <div class="lead-detail">Estetik · fiyat aldı</div>
+              </div>
+              <div class="lead-meta">
+                <div class="lead-time">1 sa</div>
+                <div style="margin-top:3px"><span class="tag tag-accent">Randevu</span></div>
+              </div>
+            </div>
+            <div class="lead-row">
+              <div class="lead-ch-dot wa">💬</div>
+              <div class="lead-info">
+                <div class="lead-name">Neslihan Türk</div>
+                <div class="lead-detail">Acil diş ağrısı</div>
+              </div>
+              <div class="lead-meta">
+                <div class="lead-time">2 sa</div>
+                <div style="margin-top:3px"><span class="tag tag-danger">Acil</span></div>
+              </div>
+            </div>
+            <div class="lead-row">
+              <div class="lead-ch-dot voice">🎙</div>
+              <div class="lead-info">
+                <div class="lead-name">Emre Bal</div>
+                <div class="lead-detail">Ortodonti bilgi</div>
+              </div>
+              <div class="lead-meta">
+                <div class="lead-time">3 sa</div>
+                <div style="margin-top:3px"><span class="tag tag-neutral">Soğuk</span></div>
+              </div>
+            </div>
+            <div class="lead-row">
+              <div class="lead-ch-dot wa">💬</div>
+              <div class="lead-info">
+                <div class="lead-name">Kübra Koç</div>
+                <div class="lead-detail">Veneer · plan imzalandı</div>
+              </div>
+              <div class="lead-meta">
+                <div class="lead-time">4 sa</div>
+                <div style="margin-top:3px"><span class="tag tag-success">Tedavi</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="grid-3">
+
+        <!-- Kanal Dönüşüm -->
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Kanal Dönüşüm</div>
+          </div>
+          <div class="panel-body" style="padding-bottom:10px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--success-text);margin-bottom:8px;font-family:var(--font-data)">WhatsApp</div>
+            <div class="funnel-step">
+              <div class="funnel-lbl">Mesaj</div>
+              <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:100%;background:var(--wa)">143</div></div>
+              <div class="funnel-pct">100%</div>
+            </div>
+            <div class="funnel-step">
+              <div class="funnel-lbl">İlgili</div>
+              <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:68%;background:oklch(0.47 0.14 155)">97</div></div>
+              <div class="funnel-pct">68%</div>
+            </div>
+            <div class="funnel-step">
+              <div class="funnel-lbl">Randevu</div>
+              <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:44%;background:oklch(0.40 0.14 155)">63</div></div>
+              <div class="funnel-pct">44%</div>
+            </div>
+            <div class="funnel-step">
+              <div class="funnel-lbl">Geldi</div>
+              <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:33%;background:oklch(0.34 0.12 155)">47</div></div>
+              <div class="funnel-pct">33%</div>
+            </div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--warning-text);margin:14px 0 8px;font-family:var(--font-data)">Voice Agent</div>
+            <div class="funnel-step">
+              <div class="funnel-lbl">Çağrı</div>
+              <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:100%;background:var(--voice)">89</div></div>
+              <div class="funnel-pct">100%</div>
+            </div>
+            <div class="funnel-step">
+              <div class="funnel-lbl">İlgili</div>
+              <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:60%;background:oklch(0.53 0.15 55)">53</div></div>
+              <div class="funnel-pct">60%</div>
+            </div>
+            <div class="funnel-step">
+              <div class="funnel-lbl">Randevu</div>
+              <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:40%;background:oklch(0.46 0.14 55)">36</div></div>
+              <div class="funnel-pct">40%</div>
+            </div>
+            <div class="funnel-step">
+              <div class="funnel-lbl">Geldi</div>
+              <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:28%;background:oklch(0.40 0.13 55)">25</div></div>
+              <div class="funnel-pct">28%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Doktor Doluluk -->
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Doktor Yükü (Bugün)</div></div>
+          <div class="panel-body">
+            <div class="doc-row">
+              <div class="doc-avatar" style="background:var(--accent)">MK</div>
+              <div>
+                <div class="doc-name">Dr. M. Kaya</div>
+                <div class="doc-spec">Genel Diş Hekimi</div>
+              </div>
+              <div class="doc-right">
+                <div class="doc-count">7<span style="font-size:13px;font-weight:400;color:var(--ink-3)">/8</span></div>
+                <div class="doc-bar-wrap"><div class="doc-bar" style="width:87%;background:var(--danger)"></div></div>
+              </div>
+            </div>
+            <div class="doc-row">
+              <div class="doc-avatar" style="background:oklch(0.48 0.14 200)">ES</div>
+              <div>
+                <div class="doc-name">Dr. E. Şahin</div>
+                <div class="doc-spec">Endodontist</div>
+              </div>
+              <div class="doc-right">
+                <div class="doc-count">6<span style="font-size:13px;font-weight:400;color:var(--ink-3)">/8</span></div>
+                <div class="doc-bar-wrap"><div class="doc-bar" style="width:75%;background:var(--warning)"></div></div>
+              </div>
+            </div>
+            <div class="doc-row">
+              <div class="doc-avatar" style="background:oklch(0.52 0.14 260)">CA</div>
+              <div>
+                <div class="doc-name">Dr. C. Arslan</div>
+                <div class="doc-spec">İmplant Cerrahı</div>
+              </div>
+              <div class="doc-right">
+                <div class="doc-count">5<span style="font-size:13px;font-weight:400;color:var(--ink-3)">/8</span></div>
+                <div class="doc-bar-wrap"><div class="doc-bar" style="width:60%;background:var(--accent)"></div></div>
+              </div>
+            </div>
+            <div class="doc-row">
+              <div class="doc-avatar" style="background:var(--success)">SY</div>
+              <div>
+                <div class="doc-name">Dr. S. Yıldız</div>
+                <div class="doc-spec">Ortodontist</div>
+              </div>
+              <div class="doc-right">
+                <div class="doc-count">4<span style="font-size:13px;font-weight:400;color:var(--ink-3)">/8</span></div>
+                <div class="doc-bar-wrap"><div class="doc-bar" style="width:45%;background:var(--success)"></div></div>
+              </div>
+            </div>
+            <hr class="divider">
+            <div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:10px;font-family:var(--font-data)">Kabin Durumu</div>
+            <div class="prog-row"><div class="prog-label">Kabin 1–2</div><div class="prog-track"><div class="prog-fill" style="width:100%;background:var(--danger)"></div></div><div class="prog-val"><span class="tag tag-danger">Dolu</span></div></div>
+            <div class="prog-row"><div class="prog-label">Kabin 3</div><div class="prog-track"><div class="prog-fill" style="width:60%;background:var(--warning)"></div></div><div class="prog-val"><span class="tag tag-warning">Temizlik</span></div></div>
+            <div class="prog-row"><div class="prog-label">Kabin 4–5</div><div class="prog-track"><div class="prog-fill" style="width:0%"></div></div><div class="prog-val"><span class="tag tag-success">Müsait</span></div></div>
+          </div>
+        </div>
+
+        <!-- Gelir Trend -->
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Gelir Trendi</div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-wrap"><canvas id="dashRevenueChart" style="max-height:160px"></canvas></div>
+            <hr class="divider">
+            <div class="stat-row">
+              <div class="stat-key">Bu Ay (21 gün)</div>
+              <div class="stat-val" style="font-family:var(--font-display);font-size:15px">₺187.400</div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-key">Geçen Ay</div>
+              <div class="stat-val">₺212.800</div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-key">Büyüme</div>
+              <div class="stat-val" style="color:var(--success-text)">+8.3%</div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-key">WA + Voice Payı</div>
+              <div class="stat-val">%85.2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ RANDEVULAR ══════════════════ -->
+    <div class="section" id="sec-randevular">
+      <div class="grid-65-35">
+        <div class="panel mb-16">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Randevular</div>
+              <div class="panel-sub">Bu hafta · 21–26 Mayıs</div>
+            </div>
+            <button class="btn btn-primary btn-sm">+ Yeni Randevu</button>
+          </div>
+          <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab(this,'t-bugun')">Bugün (18)</button>
+            <button class="tab-btn" onclick="switchTab(this,'t-bekle')">Onay Bekleyen (4)</button>
+            <button class="tab-btn" onclick="switchTab(this,'t-hafta')">Bu Hafta (87)</button>
+          </div>
+
+          <div class="tab-pane active" id="t-bugun">
+            <div class="tbl-wrap">
+              <table class="tbl">
+                <thead><tr><th>Saat</th><th>Hasta</th><th>Tedavi</th><th>Doktor</th><th>Kabin</th><th>Kanal</th><th>Durum</th></tr></thead>
+                <tbody>
+                  <tr><td class="td-mono">09:00</td><td><div class="td-name">Ahmet Yılmaz</div></td><td class="td-muted">Dolgu (Arka)</td><td class="td-muted">Dr. Kaya</td><td class="td-mono td-muted">K1</td><td><span class="ch-mark ch-wa">WA</span></td><td><span class="status status-success">Geldi</span></td></tr>
+                  <tr><td class="td-mono">09:30</td><td><div class="td-name">Fatma Demir</div></td><td class="td-muted">Kanal Tedavisi</td><td class="td-muted">Dr. Şahin</td><td class="td-mono td-muted">K2</td><td><span class="ch-mark ch-voice">Voice</span></td><td><span class="status status-success">Geldi</span></td></tr>
+                  <tr><td class="td-mono">10:00</td><td><div class="td-name">Mehmet Çelik</div></td><td class="td-muted">Diş Temizliği</td><td class="td-muted">Dr. Kaya</td><td class="td-mono td-muted">K1</td><td><span class="ch-mark ch-wa">WA</span></td><td><span class="status status-warning">Bekleniyor</span></td></tr>
+                  <tr><td class="td-mono">10:30</td><td><div class="td-name">Ayşe Öztürk</div></td><td class="td-muted">İmplant M.</td><td class="td-muted">Dr. Arslan</td><td class="td-mono td-muted">K3</td><td><span class="ch-mark ch-tel">Tel</span></td><td><span class="status status-warning">Bekleniyor</span></td></tr>
+                  <tr><td class="td-mono">11:00</td><td><div class="td-name">Ali Koç</div></td><td class="td-muted">Zirkonyum Kap.</td><td class="td-muted">Dr. Şahin</td><td class="td-mono td-muted">K2</td><td><span class="ch-mark ch-voice">Voice</span></td><td><span class="status status-neutral">Planlandı</span></td></tr>
+                  <tr><td class="td-mono">11:30</td><td><div class="td-name">Selin Kurt</div></td><td class="td-muted">Ortodonti K.</td><td class="td-muted">Dr. Arslan</td><td class="td-mono td-muted">K3</td><td><span class="ch-mark ch-wa">WA</span></td><td><span class="status status-neutral">Planlandı</span></td></tr>
+                  <tr><td class="td-mono">13:00</td><td><div class="td-name">Hasan Şimşek</div></td><td class="td-muted">Diş Beyazlatma</td><td class="td-muted">Dr. Yıldız</td><td class="td-mono td-muted">K4</td><td><span class="ch-mark ch-voice">Voice</span></td><td><span class="status status-neutral">Planlandı</span></td></tr>
+                  <tr><td class="td-mono">14:00</td><td><div class="td-name">Elif Çetin</div></td><td class="td-muted">Veneer (4 Diş)</td><td class="td-muted">Dr. Kaya</td><td class="td-mono td-muted">K1</td><td><span class="ch-mark ch-wa">WA</span></td><td><span class="status status-neutral">Planlandı</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="tab-pane" id="t-bekle">
+            <div class="tbl-wrap">
+              <table class="tbl">
+                <thead><tr><th>Talep</th><th>Hasta</th><th>Tedavi</th><th>Tercih</th><th>Kanal</th><th>İşlem</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td class="td-mono td-muted">Bugün 10:23</td><td><div class="td-name">Zeynep Aydın</div></td><td class="td-muted">İmplant M.</td><td class="td-muted">Öğlen</td><td><span class="ch-mark ch-wa">WA</span></td>
+                    <td style="display:flex;gap:6px;padding:10px 16px"><button class="btn btn-success btn-sm">Onayla</button><button class="btn btn-ghost btn-sm">Reddet</button></td>
+                  </tr>
+                  <tr>
+                    <td class="td-mono td-muted">Bugün 09:14</td><td><div class="td-name">Burak Yıldız</div></td><td class="td-muted">Estetik M.</td><td class="td-muted">Sabah</td><td><span class="ch-mark ch-voice">Voice</span></td>
+                    <td style="display:flex;gap:6px;padding:10px 16px"><button class="btn btn-success btn-sm">Onayla</button><button class="btn btn-ghost btn-sm">Reddet</button></td>
+                  </tr>
+                  <tr>
+                    <td class="td-mono td-muted">Dün 17:45</td><td><div class="td-name">Murat Taş</div></td><td class="td-muted">Kanal Ted.</td><td class="td-muted">Öğleden sonra</td><td><span class="ch-mark ch-wa">WA</span></td>
+                    <td style="display:flex;gap:6px;padding:10px 16px"><button class="btn btn-success btn-sm">Onayla</button><button class="btn btn-ghost btn-sm">Reddet</button></td>
+                  </tr>
+                  <tr>
+                    <td class="td-mono td-muted">Dün 16:20</td><td><div class="td-name">Ceren Boz</div></td><td class="td-muted">Ortodonti M.</td><td class="td-muted">Herhangi</td><td><span class="ch-mark ch-voice">Voice</span></td>
+                    <td style="display:flex;gap:6px;padding:10px 16px"><button class="btn btn-success btn-sm">Onayla</button><button class="btn btn-ghost btn-sm">Reddet</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="tab-pane" id="t-hafta">
+            <div class="panel-body">
+              <div class="week-grid">
+                <div class="wg-head"></div>
+                <div class="wg-head">Sal 20</div>
+                <div class="wg-head wg-today-head">Per 21 ·</div>
+                <div class="wg-head">Cum 22</div>
+                <div class="wg-head">Cmt 23</div>
+                <div class="wg-head">Pts 26</div>
+                <div class="wg-head">Sal 27</div>
+                <div class="wg-time">09:00</div>
+                <div class="wg-cell"><div class="wg-appt blue">A. Kaya · Dolgu</div></div>
+                <div class="wg-cell today-col"><div class="wg-appt blue">A. Yılmaz · Dolgu</div><div class="wg-appt green">F. Demir · Kanal</div></div>
+                <div class="wg-cell"><div class="wg-appt rose">H. Şen · Veneer</div></div>
+                <div class="wg-cell"><div class="wg-appt amber">K. Doğan · Beyaz.</div></div>
+                <div class="wg-cell"><div class="wg-appt green">T. Alp · Kontrol</div></div>
+                <div class="wg-cell"><div class="wg-appt blue">G. Ateş · Dolgu</div></div>
+                <div class="wg-time">10:00</div>
+                <div class="wg-cell"><div class="wg-appt amber">B. Arslan · Kanal</div></div>
+                <div class="wg-cell today-col"><div class="wg-appt amber">M. Çelik · Temiz.</div><div class="wg-appt blue">A. Öztürk · İmpl.</div></div>
+                <div class="wg-cell"><div class="wg-appt blue">L. Taş · Kanal</div><div class="wg-appt green">O. Yıldız · Dolgu</div></div>
+                <div class="wg-cell"></div>
+                <div class="wg-cell"><div class="wg-appt blue">Y. Kara · İmpl.</div></div>
+                <div class="wg-cell"><div class="wg-appt rose">D. Çam · Ven.</div></div>
+                <div class="wg-time">13:00</div>
+                <div class="wg-cell"><div class="wg-appt green">S. Demir · Beyaz.</div></div>
+                <div class="wg-cell today-col"><div class="wg-appt rose">H. Şimşek · Bey.</div></div>
+                <div class="wg-cell"><div class="wg-appt blue">P. Kurt · Kanal</div></div>
+                <div class="wg-cell"><div class="wg-appt amber">R. Kaya · Ort.</div></div>
+                <div class="wg-cell"><div class="wg-appt green">E. Söz · Temiz.</div><div class="wg-appt blue">F. Baş · Dolgu</div></div>
+                <div class="wg-cell"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Haftalık Özet + Tedavi Dağılımı -->
+        <div class="col-stack">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Haftalık Özet</div></div>
+            <div class="panel-body">
+              <div class="stat-row"><div class="stat-key">Toplam Randevu</div><div class="stat-val txt-display" style="font-size:17px">87</div></div>
+              <div class="stat-row"><div class="stat-key">Tamamlanan</div><div class="stat-val" style="color:var(--success-text)">54</div></div>
+              <div class="stat-row"><div class="stat-key">Bekleyen</div><div class="stat-val" style="color:var(--warning-text)">24</div></div>
+              <div class="stat-row"><div class="stat-key">İptal</div><div class="stat-val" style="color:var(--danger-text)">9</div></div>
+              <div class="stat-row"><div class="stat-key">WhatsApp Kaynağı</div><div class="stat-val"><span class="ch-mark ch-wa">56</span></div></div>
+              <div class="stat-row"><div class="stat-key">Voice Kaynağı</div><div class="stat-val"><span class="ch-mark ch-voice">31</span></div></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Tedavi Dağılımı</div></div>
+            <div class="panel-body">
+              <div class="chart-wrap"><canvas id="treatChart" style="max-height:180px"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ LEADS ══════════════════ -->
+    <div class="section" id="sec-leads">
+      <!-- KPI Strip variant -->
+      <div class="kpi-strip" style="margin-bottom:20px;grid-template-columns:repeat(4,1fr)">
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Toplam Lead (Bu Ay)</div>
+          <div class="kpi-cell-value">232</div>
+          <div class="kpi-cell-sub">143 WA + 89 Voice</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Randevuya Dönen</div>
+          <div class="kpi-cell-value">99</div>
+          <div class="kpi-cell-sub"><span class="kpi-delta up">%42.7</span> dönüşüm</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Takip Bekleyen</div>
+          <div class="kpi-cell-value">31</div>
+          <div class="kpi-cell-sub">7'si bugün aktif</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Ort. Yanıt Süresi</div>
+          <div class="kpi-cell-value">3.2<span class="kpi-unit">dk</span></div>
+          <div class="kpi-cell-sub"><span class="kpi-delta up">Hedef &lt;5dk ✓</span></div>
+        </div>
+      </div>
+
+      <div class="grid-60-40">
+        <div class="panel">
+          <div class="panel-head">
+            <div><div class="panel-title">Lead Listesi</div><div class="panel-sub">Son 30 gün</div></div>
+            <div style="display:flex;gap:8px">
+              <select class="filter-select"><option>Tüm Kanallar</option><option>WhatsApp</option><option>Voice</option></select>
+              <select class="filter-select"><option>Tüm Durumlar</option><option>Sıcak</option><option>Randevu</option><option>Tedavi</option></select>
+            </div>
+          </div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>Hasta</th><th>Kanal</th><th>İlgi</th><th>İlk Temas</th><th>Durum</th><th>Son Notlar</th></tr></thead>
+              <tbody>
+                <tr><td><div class="td-name">Zeynep Aydın</div><div class="td-sub">0532 xxx xx xx</div></td><td><span class="ch-mark ch-wa">WA</span></td><td class="td-muted">İmplant</td><td class="td-mono td-muted">Bugün 10:14</td><td><span class="tag tag-warning">Takip Et</span></td><td class="td-muted">Bilgi talep etti</td></tr>
+                <tr><td><div class="td-name">Burak Yıldız</div><div class="td-sub">0541 xxx xx xx</div></td><td><span class="ch-mark ch-voice">Voice</span></td><td class="td-muted">Estetik</td><td class="td-mono td-muted">Bugün 09:08</td><td><span class="tag tag-accent">Randevu</span></td><td class="td-muted">Cuma 14:00 onaylandı</td></tr>
+                <tr><td><div class="td-name">Neslihan Türk</div><div class="td-sub">0554 xxx xx xx</div></td><td><span class="ch-mark ch-wa">WA</span></td><td class="td-muted">Acil Diş</td><td class="td-mono td-muted">Bugün 08:41</td><td><span class="tag tag-danger">Acil</span></td><td class="td-muted">Gün içi slot verildi</td></tr>
+                <tr><td><div class="td-name">Emre Bal</div><div class="td-sub">0536 xxx xx xx</div></td><td><span class="ch-mark ch-voice">Voice</span></td><td class="td-muted">Ortodonti</td><td class="td-mono td-muted">Dün 17:22</td><td><span class="tag tag-neutral">Soğuk</span></td><td class="td-muted">Fiyat yüksek buldu</td></tr>
+                <tr><td><div class="td-name">Kübra Koç</div><div class="td-sub">0546 xxx xx xx</div></td><td><span class="ch-mark ch-wa">WA</span></td><td class="td-muted">Veneer</td><td class="td-mono td-muted">Dün 15:55</td><td><span class="tag tag-success">Tedavi</span></td><td class="td-muted">İmzalı plan hazır</td></tr>
+                <tr><td><div class="td-name">Tarık Şahin</div><div class="td-sub">0555 xxx xx xx</div></td><td><span class="ch-mark ch-voice">Voice</span></td><td class="td-muted">İmplant</td><td class="td-mono td-muted">Dün 14:10</td><td><span class="tag tag-accent">Randevu</span></td><td class="td-muted">Salı 11:00</td></tr>
+                <tr><td><div class="td-name">Dilnoza Ergün</div><div class="td-sub">0533 xxx xx xx</div></td><td><span class="ch-mark ch-wa">WA</span></td><td class="td-muted">Kanal Ted.</td><td class="td-mono td-muted">Dün 11:30</td><td><span class="tag tag-warning">Takip Et</span></td><td class="td-muted">Fiyat araştırıyor</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="col-stack">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Lead Kaynağı</div></div>
+            <div class="panel-body">
+              <div class="chart-wrap"><canvas id="leadSourceChart" style="max-height:170px"></canvas></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Durum Özeti</div></div>
+            <div class="panel-body">
+              <div class="stat-row"><div class="stat-key">Acil / Sıcak</div><div class="stat-val" style="color:var(--danger-text)">14</div></div>
+              <div class="stat-row"><div class="stat-key">Randevusu Var</div><div class="stat-val" style="color:var(--accent)">43</div></div>
+              <div class="stat-row"><div class="stat-key">Takip Bekleyen</div><div class="stat-val" style="color:var(--warning-text)">31</div></div>
+              <div class="stat-row"><div class="stat-key">Tedavide</div><div class="stat-val" style="color:var(--success-text)">76</div></div>
+              <div class="stat-row"><div class="stat-key">Soğuk / Pasif</div><div class="stat-val" style="color:var(--ink-3)">68</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ WHATSAPP ══════════════════ -->
+    <div class="section" id="sec-whatsapp">
+      <div class="kpi-strip mb-16">
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Bugün Mesaj</div>
+          <div class="kpi-cell-value" style="color:var(--wa)">47</div>
+          <div class="kpi-cell-sub">28 aktif konuşma</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Bot Çözüm</div>
+          <div class="kpi-cell-value">%73</div>
+          <div class="kpi-cell-sub"><span class="kpi-delta up">İnsan devralmadan</span></div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Ort. Yanıt</div>
+          <div class="kpi-cell-value">1.8<span class="kpi-unit">dk</span></div>
+          <div class="kpi-cell-sub">Bot yanıt süresi</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">WA → Randevu</div>
+          <div class="kpi-cell-value">%44</div>
+          <div class="kpi-cell-sub"><span class="kpi-delta up">↑ 4pt geçen ay</span></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Son Konuşmalar</div><div class="panel-sub">Canlı akış</div></div>
+          <div class="panel-body" style="padding-top:6px;padding-bottom:6px">
+            <div class="tl-item"><div class="tl-time">10:42</div><div class="tl-dot" style="background:var(--success)"></div><div class="tl-body"><p>Zeynep Aydın — Randevu talebi</p><span>İmplant muayenesi için gün soruldu. Bot randevu formu gönderdi.</span></div></div>
+            <div class="tl-item"><div class="tl-time">10:15</div><div class="tl-dot" style="background:var(--warning)"></div><div class="tl-body"><p>Ali Kaya — Fiyat sorusu</p><span>Zirkonyum fiyatı soruldu. Bot liste gönderdi. Müşteri düşünüyor.</span></div></div>
+            <div class="tl-item"><div class="tl-time">09:58</div><div class="tl-dot" style="background:var(--danger)"></div><div class="tl-body"><p>Neslihan Türk — Acil diş ağrısı</p><span>Şiddetli ağrı. Bot operatöre yönlendirdi. Gün içi slot verildi.</span></div></div>
+            <div class="tl-item"><div class="tl-time">09:30</div><div class="tl-dot" style="background:var(--accent)"></div><div class="tl-body"><p>Mert Doğan — Randevu onayı</p><span>Yarın 15:00 onaylandı. Hatırlatma mesajı gönderildi.</span></div></div>
+            <div class="tl-item"><div class="tl-time">09:12</div><div class="tl-dot" style="background:var(--success)"></div><div class="tl-body"><p>Derya Yılmaz — Tedavi sonrası sorular</p><span>İmplant bakım soruları. Bot rehber gönderdi. Memnun.</span></div></div>
+            <div class="tl-item"><div class="tl-time">08:47</div><div class="tl-dot" style="background:var(--ink-4)"></div><div class="tl-body"><p>Okan Taş — İptal ve yeniden plan</p><span>Randevu iptali. Bot Cuma'ya yeni slot önerdi. Kabul etti.</span></div></div>
+          </div>
+        </div>
+
+        <div class="col-stack">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Bot Performansı</div></div>
+            <div class="panel-body">
+              <div class="chart-wrap"><canvas id="waChart" style="max-height:150px"></canvas></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">En Çok Sorulan</div></div>
+            <div class="panel-body">
+              <div class="prog-row"><div class="prog-label">Randevu</div><div class="prog-track"><div class="prog-fill" style="width:78%;background:var(--wa)"></div></div><div class="prog-val">%78</div></div>
+              <div class="prog-row"><div class="prog-label">Fiyat</div><div class="prog-track"><div class="prog-fill" style="width:61%;background:var(--wa)"></div></div><div class="prog-val">%61</div></div>
+              <div class="prog-row"><div class="prog-label">Bilgi</div><div class="prog-track"><div class="prog-fill" style="width:43%;background:var(--wa)"></div></div><div class="prog-val">%43</div></div>
+              <div class="prog-row"><div class="prog-label">Acil</div><div class="prog-track"><div class="prog-fill" style="width:18%;background:var(--danger)"></div></div><div class="prog-val">%18</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ VOICE ══════════════════ -->
+    <div class="section" id="sec-voice">
+      <div class="kpi-strip mb-16">
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Bugün Çağrı</div>
+          <div class="kpi-cell-value" style="color:var(--voice)">23</div>
+          <div class="kpi-cell-sub">17 tamam · 6 kaçırıldı</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Ort. Süre</div>
+          <div class="kpi-cell-value">4.2<span class="kpi-unit">dk</span></div>
+          <div class="kpi-cell-sub">Randevu 3.1 · Bilgi 5.8</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Voice → Randevu</div>
+          <div class="kpi-cell-value">%40</div>
+          <div class="kpi-cell-sub"><span class="kpi-delta up">↑ 5pt geçen ay</span></div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Memnuniyet</div>
+          <div class="kpi-cell-value">4.6<span class="kpi-unit">/5</span></div>
+          <div class="kpi-cell-sub">Çağrı sonrası anket</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Çağrı Kaydı</div><div class="panel-sub">Bugün</div></div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>Saat</th><th>Numara</th><th>Süre</th><th>Konu</th><th>Sonuç</th></tr></thead>
+              <tbody>
+                <tr><td class="td-mono">09:03</td><td class="td-mono td-muted">0532 xxx</td><td class="td-mono">3:42</td><td class="td-muted">Randevu alma</td><td><span class="tag tag-success">Verildi</span></td></tr>
+                <tr><td class="td-mono">09:18</td><td class="td-mono td-muted">0541 xxx</td><td class="td-mono">5:21</td><td class="td-muted">İmplant bilgisi</td><td><span class="tag tag-accent">Talep</span></td></tr>
+                <tr><td class="td-mono">09:45</td><td class="td-mono td-muted">0555 xxx</td><td class="td-mono">2:08</td><td class="td-muted">İptal</td><td><span class="tag tag-warning">Ertelendi</span></td></tr>
+                <tr><td class="td-mono">10:12</td><td class="td-mono td-muted">0546 xxx</td><td class="td-mono">4:55</td><td class="td-muted">Veneer fiyat</td><td><span class="tag tag-warning">Takip</span></td></tr>
+                <tr><td class="td-mono">10:33</td><td class="td-mono td-muted">0549 xxx</td><td class="td-mono">1:22</td><td class="td-muted">Acil ağrı</td><td><span class="tag tag-danger">Yönlendirildi</span></td></tr>
+                <tr><td class="td-mono">10:58</td><td class="td-mono td-muted">0536 xxx</td><td class="td-mono">6:14</td><td class="td-muted">Ortodonti bilgi</td><td><span class="tag tag-neutral">Soğuk</span></td></tr>
+                <tr><td class="td-mono">11:15</td><td class="td-mono td-muted">0533 xxx</td><td class="td-mono">3:30</td><td class="td-muted">Randevu alma</td><td><span class="tag tag-success">Verildi</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="col-stack">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Haftalık Çağrı Trendi</div></div>
+            <div class="panel-body">
+              <div class="chart-wrap"><canvas id="voiceChart" style="max-height:150px"></canvas></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Çağrı Konusu</div></div>
+            <div class="panel-body">
+              <div class="prog-row"><div class="prog-label">Randevu</div><div class="prog-track"><div class="prog-fill" style="width:65%;background:var(--voice)"></div></div><div class="prog-val">%65</div></div>
+              <div class="prog-row"><div class="prog-label">Bilgi</div><div class="prog-track"><div class="prog-fill" style="width:48%;background:var(--voice)"></div></div><div class="prog-val">%48</div></div>
+              <div class="prog-row"><div class="prog-label">İptal/Değişik.</div><div class="prog-track"><div class="prog-fill" style="width:22%;background:var(--warning)"></div></div><div class="prog-val">%22</div></div>
+              <div class="prog-row"><div class="prog-label">Şikayet</div><div class="prog-track"><div class="prog-fill" style="width:8%;background:var(--danger)"></div></div><div class="prog-val">%8</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ DOKTORLAR ══════════════════ -->
+    <div class="section" id="sec-doktorlar">
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Doktor Durumu</div><div class="panel-sub">Bugün</div></div>
+          <div class="panel-body" style="padding-top:6px;padding-bottom:6px">
+            <div class="doc-row">
+              <div class="doc-avatar" style="background:var(--accent)">MK</div>
+              <div style="flex:1">
+                <div class="doc-name">Dr. Mehmet Kaya</div>
+                <div class="doc-spec">Genel Diş Hekimi · Kabin 1</div>
+              </div>
+              <div class="doc-right">
+                <div class="doc-count">7<span style="font-size:13px;font-weight:400;color:var(--ink-3)">/8</span></div>
+                <div class="doc-bar-wrap"><div class="doc-bar" style="width:87%;background:var(--danger)"></div></div>
+                <div style="margin-top:3px"><span class="tag tag-danger">Çok Yoğun</span></div>
+              </div>
+            </div>
+            <div class="doc-row">
+              <div class="doc-avatar" style="background:oklch(0.48 0.14 200)">ES</div>
+              <div style="flex:1">
+                <div class="doc-name">Dr. Elif Şahin</div>
+                <div class="doc-spec">Endodontist · Kabin 2</div>
+              </div>
+              <div class="doc-right">
+                <div class="doc-count">6<span style="font-size:13px;font-weight:400;color:var(--ink-3)">/8</span></div>
+                <div class="doc-bar-wrap"><div class="doc-bar" style="width:75%;background:var(--warning)"></div></div>
+                <div style="margin-top:3px"><span class="tag tag-warning">Yoğun</span></div>
+              </div>
+            </div>
+            <div class="doc-row">
+              <div class="doc-avatar" style="background:oklch(0.52 0.14 260)">CA</div>
+              <div style="flex:1">
+                <div class="doc-name">Dr. Can Arslan</div>
+                <div class="doc-spec">İmplant Cerrahı · Kabin 3</div>
+              </div>
+              <div class="doc-right">
+                <div class="doc-count">5<span style="font-size:13px;font-weight:400;color:var(--ink-3)">/8</span></div>
+                <div class="doc-bar-wrap"><div class="doc-bar" style="width:60%;background:var(--accent)"></div></div>
+                <div style="margin-top:3px"><span class="tag tag-accent">Normal</span></div>
+              </div>
+            </div>
+            <div class="doc-row">
+              <div class="doc-avatar" style="background:var(--success)">SY</div>
+              <div style="flex:1">
+                <div class="doc-name">Dr. Seda Yıldız</div>
+                <div class="doc-spec">Ortodontist · Kabin 5</div>
+              </div>
+              <div class="doc-right">
+                <div class="doc-count">4<span style="font-size:13px;font-weight:400;color:var(--ink-3)">/8</span></div>
+                <div class="doc-bar-wrap"><div class="doc-bar" style="width:45%;background:var(--success)"></div></div>
+                <div style="margin-top:3px"><span class="tag tag-success">Müsait</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-stack">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Kabin Durumu</div></div>
+            <div class="tbl-wrap">
+              <table class="tbl">
+                <thead><tr><th>Kabin</th><th>Doktor</th><th>Durum</th><th>Şu An / Sonraki</th></tr></thead>
+                <tbody>
+                  <tr><td class="td-mono">K1</td><td class="td-muted">Dr. Kaya</td><td><span class="status status-danger">Dolu</span></td><td class="td-muted">Dolgu → 11:00 A.Koç</td></tr>
+                  <tr><td class="td-mono">K2</td><td class="td-muted">Dr. Şahin</td><td><span class="status status-danger">Dolu</span></td><td class="td-muted">Kanal → 11:00</td></tr>
+                  <tr><td class="td-mono">K3</td><td class="td-muted">Dr. Arslan</td><td><span class="status status-warning">Temizlik</span></td><td class="td-muted">→ 10:30 A.Öztürk</td></tr>
+                  <tr><td class="td-mono">K4</td><td class="td-muted">—</td><td><span class="status status-success">Müsait</span></td><td class="td-muted">→ 13:00 H.Şimşek</td></tr>
+                  <tr><td class="td-mono">K5</td><td class="td-muted">Dr. Yıldız</td><td><span class="status status-success">Müsait</span></td><td class="td-muted">→ 11:30 S.Kurt</td></tr>
+                  <tr><td class="td-mono">K6</td><td class="td-muted">—</td><td><span class="status status-neutral">Kapalı</span></td><td class="td-muted">Bakımda</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Bu Ay Hasta Sayısı</div></div>
+            <div class="panel-body">
+              <div class="chart-wrap"><canvas id="doctorChart" style="max-height:140px"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ GELİR ══════════════════ -->
+    <div class="section" id="sec-gelir">
+      <div class="kpi-strip mb-16">
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Bu Ay Gelir</div>
+          <div class="kpi-cell-value"><span class="kpi-unit">₺</span>187.4K</div>
+          <div class="kpi-cell-sub"><span class="kpi-delta flat">Hedef ₺230K · %81</span></div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Tedavi Başına Ort.</div>
+          <div class="kpi-cell-value"><span class="kpi-unit">₺</span>3.8K</div>
+          <div class="kpi-cell-sub"><span class="kpi-delta up">↑ ₺320</span> geçen aya göre</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Bekleyen Ödeme</div>
+          <div class="kpi-cell-value"><span class="kpi-unit">₺</span>24.2K</div>
+          <div class="kpi-cell-sub">8 hastada açık bakiye</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-cell-label">Kanal ROI</div>
+          <div class="kpi-cell-value">4.7<span class="kpi-unit">x</span></div>
+          <div class="kpi-cell-sub">WA + Voice yatırım getirisi</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Aylık Gelir (Son 6 Ay)</div></div>
+          <div class="panel-body">
+            <div class="chart-wrap"><canvas id="revenueChart" style="max-height:240px"></canvas></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Tedavi Türü Gelir Dağılımı</div></div>
+          <div class="panel-body">
+            <div class="chart-wrap"><canvas id="revByTreatChart" style="max-height:200px"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-top:16px">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">WhatsApp Kanalı</div></div>
+          <div class="panel-body">
+            <div class="stat-row"><div class="stat-key">Bu Ay Hasta</div><div class="stat-val txt-display" style="font-size:17px">63</div></div>
+            <div class="stat-row"><div class="stat-key">Toplam Gelir</div><div class="stat-val" style="color:var(--success-text)">₺98.400</div></div>
+            <div class="stat-row"><div class="stat-key">Hasta Başına</div><div class="stat-val">₺1.561</div></div>
+            <div class="stat-row"><div class="stat-key">Kanal Payı</div><div class="stat-val">%52.5</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Voice Agent Kanalı</div></div>
+          <div class="panel-body">
+            <div class="stat-row"><div class="stat-key">Bu Ay Hasta</div><div class="stat-val txt-display" style="font-size:17px">36</div></div>
+            <div class="stat-row"><div class="stat-key">Toplam Gelir</div><div class="stat-val" style="color:var(--warning-text)">₺61.200</div></div>
+            <div class="stat-row"><div class="stat-key">Hasta Başına</div><div class="stat-val">₺1.700</div></div>
+            <div class="stat-row"><div class="stat-key">Kanal Payı</div><div class="stat-val">%32.7</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Manuel / Diğer</div></div>
+          <div class="panel-body">
+            <div class="stat-row"><div class="stat-key">Bu Ay Hasta</div><div class="stat-val txt-display" style="font-size:17px">27</div></div>
+            <div class="stat-row"><div class="stat-key">Toplam Gelir</div><div class="stat-val" style="color:var(--ink-2)">₺27.800</div></div>
+            <div class="stat-row"><div class="stat-key">Hasta Başına</div><div class="stat-val">₺1.030</div></div>
+            <div class="stat-row"><div class="stat-key">Kanal Payı</div><div class="stat-val">%14.8</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<script>
+/* ──────────────── STATE ──────────────── */
+const pageTitles = {
+  dashboard: 'Genel Bakış',
+  randevular: 'Randevular',
+  leads: 'Hasta / Lead Takibi',
+  whatsapp: 'WhatsApp Chatbot',
+  voice: 'Voice Agent',
+  doktorlar: 'Doktorlar & Kabinler',
+  gelir: 'Gelir & İstatistikler'
+};
+
+/* ──────────────── DATE ──────────────── */
+const now = new Date();
+document.getElementById('today-date').textContent = now.toLocaleDateString('tr-TR', {
+  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+});
+
+/* ──────────────── NAVIGATION ──────────────── */
+function nav(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  const sec = document.getElementById('sec-' + id);
+  if (sec) sec.classList.add('active');
+  const item = document.querySelector(`[data-section="${id}"]`);
+  if (item) item.classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[id] || id;
+  initChartsForSection(id);
+}
+
+document.querySelectorAll('.sb-item[data-section]').forEach(item => {
+  item.addEventListener('click', () => nav(item.dataset.section));
+});
+
+/* ──────────────── TABS ──────────────── */
+function switchTab(btn, paneId) {
+  const bar  = btn.closest('.tab-bar');
+  const panel = btn.closest('.panel');
+  bar.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  panel.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const pane = document.getElementById(paneId);
+  if (pane) pane.classList.add('active');
+}
+
+/* ──────────────── CHART DEFAULTS ──────────────── */
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size   = 11;
+Chart.defaults.color       = 'oklch(0.62 0.012 255)';
+
+const INK3  = 'oklch(0.62 0.012 255)';
+const GRID  = 'oklch(0.87 0.010 80)';
+const ACCENT= 'oklch(0.46 0.12 200)';
+const WA    = 'oklch(0.52 0.15 155)';
+const VOICE = 'oklch(0.58 0.16 55)';
+const SUCC  = 'oklch(0.51 0.14 155)';
+const WARN  = 'oklch(0.63 0.16 70)';
+const DANG  = 'oklch(0.52 0.19 25)';
+const SLATE = 'oklch(0.62 0.010 255)';
+
+function baseOpts(yFmt) {
+  return {
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: INK3 } },
+      y: { grid: { color: GRID, lineWidth: 1 }, ticks: { color: INK3, callback: yFmt || (v => v) } }
+    }
+  };
+}
+
+const chartCache = {};
+
+function makeChart(id, config) {
+  if (chartCache[id]) { chartCache[id].destroy(); }
+  const el = document.getElementById(id);
+  if (!el) return;
+  chartCache[id] = new Chart(el, config);
+}
+
+/* ──────────────── CHARTS BY SECTION ──────────────── */
+function initChartsForSection(id) {
+  if (id === 'dashboard' || id === '__init') {
+    makeChart('dashRevenueChart', {
+      type: 'line',
+      data: {
+        labels: ['Kas', 'Ara', 'Oca', 'Şub', 'Mar', 'Nis', 'May'],
+        datasets: [{
+          data: [178000, 192000, 168000, 205000, 212800, 198000, 187400],
+          borderColor: ACCENT, backgroundColor: 'oklch(0.46 0.12 200 / 0.07)',
+          fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: ACCENT
+        }]
+      },
+      options: { ...baseOpts(v => '₺' + (v/1000).toFixed(0) + 'K') }
+    });
+  }
+
+  if (id === 'randevular') {
+    makeChart('treatChart', {
+      type: 'doughnut',
+      data: {
+        labels: ['Dolgu','Kanal','İmplant','Estetik','Ortodonti','Diğer'],
+        datasets: [{
+          data: [28, 18, 15, 14, 12, 13],
+          backgroundColor: [ACCENT, SUCC, VOICE, WARN, DANG, SLATE],
+          borderWidth: 0, hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true, cutout: '62%',
+        plugins: { legend: { display: true, position: 'right',
+          labels: { font: { size: 11 }, padding: 10, boxWidth: 10 } } }
+      }
+    });
+  }
+
+  if (id === 'leads') {
+    makeChart('leadSourceChart', {
+      type: 'doughnut',
+      data: {
+        labels: ['WhatsApp', 'Voice Agent', 'Telefon', 'Yönlendirme'],
+        datasets: [{
+          data: [143, 89, 27, 18],
+          backgroundColor: [WA, VOICE, ACCENT, WARN],
+          borderWidth: 0, hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true, cutout: '60%',
+        plugins: { legend: { display: true, position: 'bottom',
+          labels: { font: { size: 11 }, padding: 10, boxWidth: 10 } } }
+      }
+    });
+  }
+
+  if (id === 'whatsapp') {
+    makeChart('waChart', {
+      type: 'bar',
+      data: {
+        labels: ['Oca', 'Şub', 'Mar', 'Nis', 'May'],
+        datasets: [
+          { label: 'Mesaj', data: [89, 112, 98, 127, 143], backgroundColor: 'oklch(0.52 0.15 155 / 0.8)', borderRadius: 3 },
+          { label: 'Randevu', data: [34, 47, 42, 55, 63], backgroundColor: 'oklch(0.52 0.15 155 / 0.35)', borderRadius: 3 }
+        ]
+      },
+      options: { ...baseOpts(), plugins: { legend: { display: true, position: 'top',
+        labels: { font: { size: 11 }, boxWidth: 10 } } } }
+    });
+  }
+
+  if (id === 'voice') {
+    makeChart('voiceChart', {
+      type: 'line',
+      data: {
+        labels: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'],
+        datasets: [
+          { label: 'Çağrı', data: [18, 22, 19, 23, 0, 0], borderColor: VOICE, backgroundColor: 'oklch(0.58 0.16 55 / 0.08)', fill: true, tension: 0.4 },
+          { label: 'Randevu', data: [7, 9, 8, 9, 0, 0], borderColor: WARN, backgroundColor: 'oklch(0.63 0.16 70 / 0.08)', fill: true, tension: 0.4 }
+        ]
+      },
+      options: { ...baseOpts(), plugins: { legend: { display: true, position: 'top',
+        labels: { font: { size: 11 }, boxWidth: 10 } } } }
+    });
+  }
+
+  if (id === 'doktorlar') {
+    makeChart('doctorChart', {
+      type: 'bar',
+      data: {
+        labels: ['Dr. Kaya', 'Dr. Şahin', 'Dr. Arslan', 'Dr. Yıldız'],
+        datasets: [{
+          data: [87, 74, 62, 48],
+          backgroundColor: [DANG, WARN, ACCENT, SUCC],
+          borderRadius: 4
+        }]
+      },
+      options: { ...baseOpts() }
+    });
+  }
+
+  if (id === 'gelir') {
+    makeChart('revenueChart', {
+      type: 'bar',
+      data: {
+        labels: ['Aralık', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs'],
+        datasets: [
+          { label: 'WhatsApp', data: [88000, 74000, 92000, 98000, 96000, 98400], backgroundColor: 'oklch(0.52 0.15 155 / 0.85)', borderRadius: 4 },
+          { label: 'Voice', data: [54000, 48000, 61000, 67000, 63000, 61200], backgroundColor: 'oklch(0.58 0.16 55 / 0.85)', borderRadius: 4 },
+          { label: 'Manuel', data: [26000, 22000, 28000, 31000, 33000, 27800], backgroundColor: 'oklch(0.62 0.010 255 / 0.5)', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: true, position: 'top', labels: { font: { size: 11 }, boxWidth: 10 } } },
+        scales: {
+          x: { stacked: true, grid: { display: false }, ticks: { color: INK3 } },
+          y: { stacked: true, grid: { color: GRID }, ticks: { color: INK3, callback: v => '₺' + (v/1000).toFixed(0) + 'K' } }
+        }
+      }
+    });
+    makeChart('revByTreatChart', {
+      type: 'doughnut',
+      data: {
+        labels: ['İmplant', 'Estetik', 'Ortodonti', 'Kanal Ted.', 'Dolgu', 'Diğer'],
+        datasets: [{
+          data: [52000, 38000, 31000, 24000, 18000, 24400],
+          backgroundColor: [VOICE, WARN, ACCENT, SUCC, DANG, SLATE],
+          borderWidth: 0, hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true, cutout: '58%',
+        plugins: { legend: { display: true, position: 'right',
+          labels: { font: { size: 11 }, padding: 10, boxWidth: 10 } } }
+      }
+    });
+  }
+}
+
+/* ──────────────── INIT ──────────────── */
+initChartsForSection('__init');
+</script>
+</body>
+</html>
